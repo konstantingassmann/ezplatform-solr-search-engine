@@ -220,7 +220,7 @@ class Native extends Gateway
             }
         }
 
-        return  implode(',', $shards);
+        return implode(',', $shards);
     }
 
     /**
@@ -244,10 +244,16 @@ class Native extends Gateway
 
         foreach ($documents as $translationDocuments) {
             foreach ($translationDocuments as $document) {
-                $documentMap[$document->languageCode][] = $document;
+                $documentMap[$document->languageCode][] = $this->appendRouterField(
+                    $document,
+                    $this->endpointResolver->getIndexingTarget($document->languageCode)
+                );
 
                 if ($mainTranslationsEndpoint !== null && $document->isMainTranslation) {
-                    $mainTranslationsDocuments[] = $this->getMainTranslationDocument($document);
+                    $mainTranslationsDocuments[] = $this->appendRouterField(
+                        $this->getMainTranslationDocument($document),
+                        $mainTranslationsEndpoint
+                    );
                 }
             }
         }
@@ -304,6 +310,22 @@ class Native extends Gateway
         }
 
         $document->documents = $subDocuments;
+
+        return $document;
+    }
+
+    protected function appendRouterField(Document $document, string $endpoint): Document
+    {
+        $endpoint = EndpointReference::fromString($endpoint);
+
+        if ($endpoint->shard !== null) {
+            $document = clone $document;
+            $document->fields[] = new Field(
+                'router_field',
+                $endpoint->shard,
+                new FieldType\IdentifierField()
+            );
+        }
 
         return $document;
     }
