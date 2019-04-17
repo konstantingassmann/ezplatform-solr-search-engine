@@ -54,8 +54,9 @@ should not remove or drastically change the existing definitions.
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
     <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
 
+    <!--
     <fieldType name="currency" class="solr.CurrencyField" precisionStep="8" defaultCurrency="USD" currencyConfig="currency.xml" />
-
+    -->
 
 
 
