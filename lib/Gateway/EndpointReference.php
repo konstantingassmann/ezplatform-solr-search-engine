@@ -44,13 +44,20 @@ final class EndpointReference extends ValueObject
 
     public static function fromString(string $value): EndpointReference
     {
-        if (strpos($value, self::SHARD_DELIMITER) === false) {
-            return new self($value);
+        static $cache = [];
+
+        if (!isset($cache[$value])) {
+            $endpoint = $value;
+            $shard = null;
+
+            if (strpos($value, self::SHARD_DELIMITER) !== false) {
+                list($endpoint, $shard) = explode(self::SHARD_DELIMITER, $value, 2);
+            }
+
+            return ($cache[$value] = new self($endpoint, $shard));
         }
 
-        list($endpoint, $shard) = explode(self::SHARD_DELIMITER, $value, 2);
-
-        return new self($endpoint, $shard);
+        return $cache[$value];
     }
 
     public function __toString(): string

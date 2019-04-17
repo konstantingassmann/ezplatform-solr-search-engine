@@ -8,6 +8,7 @@
  *
  * @version //autogentag//
  */
+
 namespace EzSystems\EzPlatformSolrSearchEngine\Gateway;
 
 use EzSystems\EzPlatformSolrSearchEngine\Gateway;
@@ -63,12 +64,24 @@ class Native extends Gateway
     protected $updateSerializer;
 
     /**
+     * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy
+     */
+    protected $distributionStrategy;
+
+    /**
+     * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter
+     */
+    protected $documentRouter;
+
+    /**
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\HttpClient $client
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver $endpointResolver
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointRegistry $endpointRegistry
      * @param \EzSystems\EzPlatformSolrSearchEngine\Query\QueryConverter $contentQueryConverter
      * @param \EzSystems\EzPlatformSolrSearchEngine\Query\QueryConverter $locationQueryConverter
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\UpdateSerializer $updateSerializer
+     * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy $distributionStrategy
+     * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter $documentRouter
      */
     public function __construct(
         HttpClient $client,
@@ -76,14 +89,19 @@ class Native extends Gateway
         EndpointRegistry $endpointRegistry,
         QueryConverter $contentQueryConverter,
         QueryConverter $locationQueryConverter,
-        UpdateSerializer $updateSerializer
-    ) {
+        UpdateSerializer $updateSerializer,
+        DistributionStrategy $distributionStrategy,
+        DocumentRouter $documentRouter
+    )
+    {
         $this->client = $client;
         $this->endpointResolver = $endpointResolver;
         $this->endpointRegistry = $endpointRegistry;
         $this->contentQueryConverter = $contentQueryConverter;
         $this->locationQueryConverter = $locationQueryConverter;
         $this->updateSerializer = $updateSerializer;
+        $this->distributionStrategy = $distributionStrategy;
+        $this->documentRouter = $documentRouter;
     }
 
     /**
@@ -187,13 +205,11 @@ class Native extends Gateway
             return '';
         }
 
-        $shards = array();
-        $endpoints = $this->endpointResolver->getSearchTargets($languageSettings);
+        $shards = [];
 
+        $endpoints = $this->endpointResolver->getSearchTargets($languageSettings);
         if (!empty($endpoints)) {
-            foreach ($endpoints as $endpoint) {
-                $shards[] = $this->endpointRegistry->getEndpoint($endpoint)->getIdentifier();
-            }
+            $shards = $this->distributionStrategy->getSearchTargets($endpoints);
         }
 
         return implode(',', $shards);
@@ -213,11 +229,10 @@ class Native extends Gateway
         }
 
         $shards = [];
-        $searchTargets = $this->endpointResolver->getEndpoints();
-        if (!empty($searchTargets)) {
-            foreach ($searchTargets as $endpointName) {
-                $shards[] = $this->endpointRegistry->getEndpoint($endpointName)->getIdentifier();
-            }
+
+        $endpoints = $this->endpointResolver->getEndpoints();
+        if (!empty($endpoints)) {
+            $shards = $this->distributionStrategy->getSearchTargets($endpoints);
         }
 
         return implode(',', $shards);
@@ -244,15 +259,11 @@ class Native extends Gateway
 
         foreach ($documents as $translationDocuments) {
             foreach ($translationDocuments as $document) {
-                $documentMap[$document->languageCode][] = $this->appendRouterField(
-                    $document,
-                    $this->endpointResolver->getIndexingTarget($document->languageCode)
-                );
+                $documentMap[$document->languageCode][] = $this->documentRouter->processDocument($document);
 
                 if ($mainTranslationsEndpoint !== null && $document->isMainTranslation) {
-                    $mainTranslationsDocuments[] = $this->appendRouterField(
-                        $this->getMainTranslationDocument($document),
-                        $mainTranslationsEndpoint
+                    $mainTranslationsDocuments[] = $this->documentRouter->processMainTranslationDocument(
+                        $this->getMainTranslationDocument($document)
                     );
                 }
             }
@@ -310,22 +321,6 @@ class Native extends Gateway
         }
 
         $document->documents = $subDocuments;
-
-        return $document;
-    }
-
-    protected function appendRouterField(Document $document, string $endpoint): Document
-    {
-        $endpoint = EndpointReference::fromString($endpoint);
-
-        if ($endpoint->shard !== null) {
-            $document = clone $document;
-            $document->fields[] = new Field(
-                'router_field',
-                $endpoint->shard,
-                new FieldType\IdentifierField()
-            );
-        }
 
         return $document;
     }
@@ -400,9 +395,9 @@ class Native extends Gateway
     }
 
     /**
+     * @param $endpoint
      * @todo error handling
      *
-     * @param $endpoint
      */
     protected function purgeEndpoint($endpoint)
     {
