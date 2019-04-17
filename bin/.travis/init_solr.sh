@@ -147,5 +147,6 @@ download
 
 $SCRIPT_DIR/../generate-solr-config.sh \
         --solr-install-dir="${SOLR_INSTALL_DIR}" \
+        --solr-version="${SOLR_VERSION}" \
         --destination-dir="${SOLR_INSTALL_DIR}/server/${SOLR_HOME}/template"
 run
