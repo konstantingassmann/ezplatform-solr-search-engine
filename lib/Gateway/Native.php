@@ -69,11 +69,6 @@ class Native extends Gateway
     protected $distributionStrategy;
 
     /**
-     * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter
-     */
-    protected $documentRouter;
-
-    /**
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\HttpClient $client
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver $endpointResolver
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointRegistry $endpointRegistry
@@ -81,7 +76,6 @@ class Native extends Gateway
      * @param \EzSystems\EzPlatformSolrSearchEngine\Query\QueryConverter $locationQueryConverter
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\UpdateSerializer $updateSerializer
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy $distributionStrategy
-     * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter $documentRouter
      */
     public function __construct(
         HttpClient $client,
@@ -90,8 +84,7 @@ class Native extends Gateway
         QueryConverter $contentQueryConverter,
         QueryConverter $locationQueryConverter,
         UpdateSerializer $updateSerializer,
-        DistributionStrategy $distributionStrategy,
-        DocumentRouter $documentRouter
+        DistributionStrategy $distributionStrategy
     )
     {
         $this->client = $client;
@@ -101,7 +94,6 @@ class Native extends Gateway
         $this->locationQueryConverter = $locationQueryConverter;
         $this->updateSerializer = $updateSerializer;
         $this->distributionStrategy = $distributionStrategy;
-        $this->documentRouter = $documentRouter;
     }
 
     /**
@@ -254,15 +246,17 @@ class Native extends Gateway
     public function bulkIndexDocuments(array $documents)
     {
         $documentMap = array();
+        $documentRouter = $this->distributionStrategy->getDocumentRouter();
+
         $mainTranslationsEndpoint = $this->endpointResolver->getMainLanguagesEndpoint();
         $mainTranslationsDocuments = array();
 
         foreach ($documents as $translationDocuments) {
             foreach ($translationDocuments as $document) {
-                $documentMap[$document->languageCode][] = $this->documentRouter->processDocument($document);
+                $documentMap[$document->languageCode][] = $documentRouter->processDocument($document);
 
                 if ($mainTranslationsEndpoint !== null && $document->isMainTranslation) {
-                    $mainTranslationsDocuments[] = $this->documentRouter->processMainTranslationDocument(
+                    $mainTranslationsDocuments[] = $documentRouter->processMainTranslationDocument(
                         $this->getMainTranslationDocument($document)
                     );
                 }

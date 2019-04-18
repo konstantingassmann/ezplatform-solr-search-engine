@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy;
 
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy;
+use EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy\DocumentRouter\NullDocumentRouter;
+use EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter;
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointRegistry;
 
 /**
@@ -23,7 +25,12 @@ final class LegacyDistributionStrategy implements DistributionStrategy
      *
      * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointRegistry
      */
-    protected $endpointRegistry;
+    private $endpointRegistry;
+
+    /**
+     * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter
+     */
+    private $documentRouter;
 
     /**
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointRegistry $endpointRegistry
@@ -31,6 +38,7 @@ final class LegacyDistributionStrategy implements DistributionStrategy
     public function __construct(EndpointRegistry $endpointRegistry)
     {
         $this->endpointRegistry = $endpointRegistry;
+        $this->documentRouter = new NullDocumentRouter();
     }
 
     public function getSearchTargets(array $endpoints): array
@@ -38,5 +46,10 @@ final class LegacyDistributionStrategy implements DistributionStrategy
         return array_map(function(string $name) {
             return $this->endpointRegistry->getEndpoint($name)->getIdentifier();
         }, $endpoints);
+    }
+
+    public function getDocumentRouter(): DocumentRouter
+    {
+        return $this->documentRouter;
     }
 }

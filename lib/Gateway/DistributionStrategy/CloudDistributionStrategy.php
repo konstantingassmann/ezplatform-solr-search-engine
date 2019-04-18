@@ -10,6 +10,7 @@ namespace EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy;
 
 use eZ\Publish\SPI\Search\Document;
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy;
+use EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter;
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointReference;
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver;
 
@@ -18,21 +19,28 @@ use EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver;
  *
  * @see https://lucene.apache.org/solr/guide/7_7/distributed-requests.html
  */
-class CloudDistributionStrategy implements DistributionStrategy
+final class CloudDistributionStrategy implements DistributionStrategy
 {
     /**
      * Endpoint registry service.
      *
      * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver
      */
-    protected $endpointResolver;
+    private $endpointResolver;
+
+    /**
+     * @var \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter
+     */
+    private $documentRouter;
 
     /**
      * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\EndpointResolver $endpointResolver
+     * @param \EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter $documentRouter
      */
-    public function __construct(EndpointResolver $endpointResolver = null)
+    public function __construct(EndpointResolver $endpointResolver, DocumentRouter $documentRouter)
     {
         $this->endpointResolver = $endpointResolver;
+        $this->documentRouter = $documentRouter;
     }
 
     public function getSearchTargets(array $endpoints): array
@@ -48,5 +56,10 @@ class CloudDistributionStrategy implements DistributionStrategy
 
             return $reference->shard;
         }, $endpoints);
+    }
+
+    public function getDocumentRouter(): DocumentRouter
+    {
+        return $this->documentRouter;
     }
 }

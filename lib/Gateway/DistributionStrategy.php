@@ -11,4 +11,6 @@ namespace EzSystems\EzPlatformSolrSearchEngine\Gateway;
 interface DistributionStrategy
 {
     public function getSearchTargets(array $endpoints): array;
+
+    public function getDocumentRouter(): DocumentRouter;
 }

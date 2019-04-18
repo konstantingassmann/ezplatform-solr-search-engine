@@ -6,12 +6,15 @@
  */
 declare(strict_types=1);
 
-namespace EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter;
+namespace EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy\DocumentRouter;
 
 use eZ\Publish\SPI\Search\Document;
 use EzSystems\EzPlatformSolrSearchEngine\Gateway\DocumentRouter;
 
-final class NullRouter implements DocumentRouter
+/**
+ * Null router used together with \EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy\LegacyDistributionStrategy
+ */
+final class NullDocumentRouter implements DocumentRouter
 {
     public function processDocument(Document $document): Document
     {
