@@ -39,6 +39,8 @@ services:
     ezpublish.search.solr.gateway.distribution_strategy.abstract_legacy:
         abstract: true
         class: EzSystems\EzPlatformSolrSearchEngine\Gateway\DistributionStrategy\LegacyDistributionStrategy
+        arguments:
+            - "@ezpublish.search.solr.gateway.endpoint_registry"
 
     ezpublish.search.solr.gateway.distribution_strategy.abstract_cloud:
         abstract: true

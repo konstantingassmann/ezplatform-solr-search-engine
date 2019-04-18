@@ -172,7 +172,6 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->children()
                     ->enumNode('distribution_strategy')
-                        ->isRequired()
                         ->values(['legacy', 'cloud'])
                         ->defaultValue('legacy')
                     ->end()

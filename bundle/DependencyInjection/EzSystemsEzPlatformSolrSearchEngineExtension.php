@@ -203,7 +203,6 @@ class EzSystemsEzPlatformSolrSearchEngineExtension extends Extension
         switch ($connectionParams['distribution_strategy']) {
             case 'legacy':
                 $distributionStrategyDefinition = new ChildDefinition(self::LEGACY_DISTRIBUTION_STRATEGY_ID);
-                $distributionStrategyDefinition->setArgument(0, new Reference($endpointResolverId));
                 break;
             case 'cloud':
                 $documentRouterDefinition = new ChildDefinition(self::IMPLICIT_DOCUMENT_ROUTER_ID);
